@@ -151,10 +151,9 @@ const app = new Hono()
             }
         }
 
-        // FIX: Handle "no-assignee" value correctly
         if (assigneeId && assigneeId !== "all-tasks") {
             if (assigneeId === "no-assignee") {
-                // CHANGED: Use Query.equal for "no-assignee" string
+            
                 query.push(Query.equal("assigneeId", "no-assignee"));
             } else {
                 query.push(Query.equal("assigneeId", assigneeId));
@@ -193,7 +192,6 @@ const app = new Hono()
             query,
         );
 
-        // FIX: Also update the assignee population logic
         const projectIds = tasks.documents.map((task) => task.projectId).filter(Boolean);
         const assigneeIds = tasks.documents
             .map((task) => task.assigneeId)
@@ -235,7 +233,6 @@ const app = new Hono()
                 (project) => project.$id === task.projectId,
             );
 
-            // Handle "no-assignee" tasks
             const assignee = task.assigneeId === "no-assignee" 
                 ? null 
                 : assignees.find((assignee) => assignee.$id === task.assigneeId);

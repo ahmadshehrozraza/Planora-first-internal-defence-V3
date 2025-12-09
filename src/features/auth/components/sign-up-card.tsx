@@ -130,6 +130,7 @@ export const SignUpCard = () => {
 
                     <Button 
                     onClick={() => signUpWithGoogle()}
+                    type="button"
                     size="lg" 
                     disabled={isPending}
                     className="w-full"
@@ -141,6 +142,7 @@ export const SignUpCard = () => {
 
                     <Button 
                     onClick={() => signUpWithGithub()}
+                    type="button"
                     size="lg" 
                     disabled={isPending}
                     className="w-full"

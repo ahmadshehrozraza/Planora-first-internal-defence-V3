@@ -28,8 +28,3 @@ export const useCurrentMember = () => {
     refetch,
   };
 };
-
-// Usage in any component:
-// import { useCurrentMember } from "@/features/members/hooks/use-current-member";
-
-// const { member, role, isAdmin } = useCurrentMember();

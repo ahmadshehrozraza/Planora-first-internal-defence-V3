@@ -22,7 +22,7 @@ const app = new Hono()
         const databases = c.get("databases");
         const user = c.get("user");
 
-        const { name, imageUrl, workspaceId, projectStatus } = c.req.valid("form"); // ✅ Add projectStatus
+        const { name, imageUrl, workspaceId, projectStatus, dueDate, description } = c.req.valid("form");
 
         const member = await getMember({
             databases,
@@ -60,13 +60,14 @@ const app = new Hono()
                 imageUrl: uploadedImageUrl,
                 workspaceId,
                 projectStatus: "IN_PROGRESS",
+                dueDate: dueDate ? dueDate.toISOString() : null,
+                description: description || null,
             },
         );
 
         return c.json({ data: project });
     }
 )
-
 
     .get(
     "/",
@@ -100,6 +101,7 @@ const app = new Hono()
         ];
 
         let projectQuery = baseQuery;
+        let accessibleProjectIds: string[] = [];
 
         if (memberRole !== "ADMIN") {
             const tasks = await databases.listDocuments(
@@ -113,18 +115,18 @@ const app = new Hono()
                 ],
             );
 
-            const projectIds = tasks.documents
+            accessibleProjectIds = tasks.documents
                 .map(task => task.projectId)
                 .filter((id): id is string => !!id && id !== "no-project");
 
-            if (projectIds.length === 0) {
+            if (accessibleProjectIds.length === 0) {
                 return c.json({ 
                     data: { total: 0, documents: [] },
                     meta: { userRole: memberRole, canViewAllProjects: false }
                 });
             }
 
-            projectQuery.push(Query.contains("$id", projectIds));
+            projectQuery.push(Query.contains("$id", accessibleProjectIds));
         }
 
         const projects = await databases.listDocuments<Project>(
@@ -133,8 +135,42 @@ const app = new Hono()
             projectQuery,
         );
 
+        if (projects.total === 0) {
+            return c.json({ 
+                data: { total: 0, documents: [] },
+                meta: { userRole: memberRole, canViewAllProjects: memberRole === "ADMIN" }
+            });
+        }
+
+        const projectIds = projects.documents.map(p => p.$id);
+
+        const tasksCounts = await databases.listDocuments(
+            DATABASE_ID,
+            TASKS_ID,
+            [
+                Query.equal("workspaceId", workspaceId),
+                Query.equal("projectId", projectIds),
+                Query.select(["projectId"]), 
+            ]
+        );
+
+        const taskCountMap = new Map<string, number>();
+        tasksCounts.documents.forEach(task => {
+            if (task.projectId) {
+                taskCountMap.set(task.projectId, (taskCountMap.get(task.projectId) || 0) + 1);
+            }
+        });
+
+        const projectsWithTaskCounts = projects.documents.map(project => ({
+            ...project,
+            totalTasks: taskCountMap.get(project.$id) || 0
+        }));
+
         return c.json({ 
-            data: projects,
+            data: {
+                total: projects.total,
+                documents: projectsWithTaskCounts
+            },
             meta: {
                 userRole: memberRole,
                 canViewAllProjects: memberRole === "ADMIN",
@@ -174,7 +210,7 @@ const app = new Hono()
     )
 
 
-    .patch(
+.patch(
   "/:projectId",
   sessionMiddleware,
   zValidator("form", updateProjectSchema),
@@ -184,7 +220,7 @@ const app = new Hono()
     const user = c.get("user");
 
     const { projectId } = c.req.param();
-    const { name, imageUrl, projectStatus } = c.req.valid("form");
+    const { name, imageUrl, projectStatus, dueDate, description } = c.req.valid("form");
 
     const existingProject = await databases.getDocument<Project>(
       DATABASE_ID,
@@ -202,8 +238,7 @@ const app = new Hono()
       return c.json({ error: "unauthorized" }, 401);
     }
 
-    let uploadedImageUrl: string | undefined;
-
+    let uploadedImageUrl: string | null = null; 
     if (imageUrl instanceof File) {
       const file = await storage.createFile(
         IMAGES_BUCKET_ID,
@@ -217,8 +252,8 @@ const app = new Hono()
       );
 
       uploadedImageUrl = `data:image/png;base64,${Buffer.from(arrayBuffer).toString("base64")}`;
-    } else {
-      uploadedImageUrl = imageUrl;
+    } else if (typeof imageUrl === "string") {
+      uploadedImageUrl = imageUrl === "" ? null : imageUrl;
     }
 
     const project = await databases.updateDocument(
@@ -227,8 +262,10 @@ const app = new Hono()
       projectId,
       {
         name,
-        imageUrl: uploadedImageUrl,
+        imageUrl: uploadedImageUrl, 
         projectStatus,
+        dueDate: dueDate || null, 
+        description: description || null, 
       }
     );
 

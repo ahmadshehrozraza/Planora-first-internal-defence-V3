@@ -1,3 +1,5 @@
+"use client";
+
 import { Project } from "@/features/projects/types";
 import { Task } from "../types";
 import { ProjectAvatar } from "@/features/projects/components/project-avatar";
@@ -10,22 +12,20 @@ import { useConfirm } from "@/hooks/use-confirm";
 import { useRouter } from "next/navigation";
 import { useCurrentMember } from "@/features/members/hooks/current-user-role";
 
-
-
-interface TaskBreadCrumbsProps{
+interface TaskBreadCrumbsProps {
     project: Project;
     task: Task;
 }
 
-export const TaskBreadCrumbs = async ({
+export const TaskBreadCrumbs = ({
     project,
     task,
-}: TaskBreadCrumbsProps) => {
+}: TaskBreadCrumbsProps) => {  
 
     const router = useRouter();
     const workspaceId = useWorkspaceId();
     const { mutate, isPending } = useDeleteTask();
-    const [ ConfirmDialog, confirm ] = useConfirm(
+    const [ConfirmDialog, confirm] = useConfirm(
         "Delete Task?",
         "This action cannot be undone",
         "destructive",
@@ -33,9 +33,9 @@ export const TaskBreadCrumbs = async ({
 
     const { isAdmin } = useCurrentMember();
 
-    const handleDeleteTask = async () => {
+    const handleDeleteTask = async () => {  
         const ok = await confirm();
-        if(!ok) return;
+        if (!ok) return;
 
         mutate({
             param: { taskId: task.$id }
@@ -46,7 +46,7 @@ export const TaskBreadCrumbs = async ({
         })
     }
     
-    return(
+    return (
         <div className="flex items-center gap-x-2">
             <ConfirmDialog />
             <ProjectAvatar
@@ -66,17 +66,16 @@ export const TaskBreadCrumbs = async ({
             </p>
 
             {isAdmin &&
-            <Button
-                onClick={handleDeleteTask}
-                disabled={isPending}
-                className="ml-auto"
-                variant="destructive"
-                size="sm"
-            >
-                <TrashIcon className="size-4 lg:mr-2" />
-                <span className="hidden lg:block">Delete Task</span>
-            </Button>
-
+                <Button
+                    onClick={handleDeleteTask}
+                    disabled={isPending}
+                    className="ml-auto"
+                    variant="destructive"
+                    size="sm"
+                >
+                    <TrashIcon className="size-4 lg:mr-2" />
+                    <span className="hidden lg:block">Delete Task</span>
+                </Button>
             }
         </div>
     )

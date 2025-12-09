@@ -12,5 +12,7 @@ export type Project = Models.Document & {
     imageUrl: string;
     workspaceId: string;
     projectStatus: projectStatus;
+    description: string;
+    dueDate: string;
 };
 

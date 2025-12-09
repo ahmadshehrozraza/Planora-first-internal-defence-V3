@@ -137,37 +137,47 @@ const app = new Hono()
             memberId,
         );
 
-        const allMembersInWorkspace = await databases.listDocuments(
-            DATABASE_ID,
-            MEMBERS_ID,
-            [Query.equal("workspaceId", memberToDelete.workspaceId)] 
-        );
-
         const member = await getMember({
             databases,
             workspaceId: memberToDelete.workspaceId,
             userId: user.$id
         });
 
-        if(!member) {
-            return c.json({ error: "Unauthorized"}, 401);
+        if (!member) {
+            return c.json({ error: "Unauthorized" }, 401);
         }
 
-        if( member.$id !== memberToDelete.$id && member.role !== MemberRole.ADMIN){
-            return c.json({ error: "Unauthorized"}, 401);
+        if (member.role === MemberRole.ADMIN) {
+            if (member.$id === memberToDelete.$id) {
+                return c.json({ error: "Admin cannot delete themselves" }, 400);
+            }
+
+            await databases.deleteDocument(
+                DATABASE_ID,
+                MEMBERS_ID,
+                memberId,
+            );
+            
+            return c.json({ data: { $id: memberToDelete.$id }});
         }
 
-        const activeMembersInWorkspace = await databases.listDocuments(
+        if (member.$id !== memberToDelete.$id) {
+            return c.json({ error: "Unauthorized" }, 401);
+        }
+
+        const activeAdminsInWorkspace = await databases.listDocuments(
             DATABASE_ID,
             MEMBERS_ID,
             [
                 Query.equal("workspaceId", memberToDelete.workspaceId),
-                Query.equal("isActive", true) 
+                Query.equal("role", MemberRole.ADMIN),
+                Query.equal("isActive", true),
+                Query.notEqual("$id", memberId)
             ]
         );
 
-        if(activeMembersInWorkspace.total === 1){
-            return c.json({ error: "Cannot delete the only member"}, 400);
+        if (activeAdminsInWorkspace.total === 0) {
+            return c.json({ error: "At least one active admin must remain" }, 400);
         }
 
         await databases.deleteDocument(

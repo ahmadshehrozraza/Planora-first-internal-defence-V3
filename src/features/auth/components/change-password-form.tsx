@@ -23,12 +23,10 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
-// Step 1: Verify password schema
 const passwordVerifySchema = z.object({
     currentPassword: z.string().min(1, "Current password is required"),
 });
 
-// Step 2: Set new password schema
 const newPasswordSchema = z.object({
     newPassword: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
@@ -53,7 +51,6 @@ export const ChangePasswordForm = ({
     const [isLoading, setIsLoading] = useState(false);
     const [verifiedPassword, setVerifiedPassword] = useState(false);
 
-    // Password verification form
     const verifyForm = useForm<z.infer<typeof passwordVerifySchema>>({
         resolver: zodResolver(passwordVerifySchema),
         defaultValues: {
@@ -61,7 +58,6 @@ export const ChangePasswordForm = ({
         },
     });
 
-    // New password form
     const newPasswordForm = useForm<z.infer<typeof newPasswordSchema>>({
         resolver: zodResolver(newPasswordSchema),
         defaultValues: {
@@ -70,17 +66,13 @@ export const ChangePasswordForm = ({
         },
     });
 
-    // Step 1: Verify current password
     const onVerifySubmit = async (values: z.infer<typeof passwordVerifySchema>) => {
         setIsLoading(true);
         try {
-            // Add your password verification API call here
             console.log("Verifying password:", values);
             
-            // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1000));
             
-            // If password is correct
             setVerifiedPassword(true);
             setCurrentStep('newPassword');
             toast.success("Password verified successfully");
@@ -91,14 +83,11 @@ export const ChangePasswordForm = ({
         }
     };
 
-    // Step 2: Set new password
     const onNewPasswordSubmit = async (values: z.infer<typeof newPasswordSchema>) => {
         setIsLoading(true);
         try {
-            // Add your password change API call here
             console.log("Changing password:", values);
             
-            // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1000));
             
             toast.success("Password changed successfully");
@@ -139,8 +128,6 @@ export const ChangePasswordForm = ({
                         {currentStep === 'newPassword' && "Set New Password"}
                     </DialogTitle>
                 </DialogHeader>
-
-                {/* Step 1: Password Verification */}
                 {currentStep === 'verify' && (
                     <Form {...verifyForm}>
                         <form onSubmit={verifyForm.handleSubmit(onVerifySubmit)} className="space-y-4">
@@ -191,7 +178,6 @@ export const ChangePasswordForm = ({
                     </Form>
                 )}
 
-                {/* Step 2: Set New Password */}
                 {currentStep === 'newPassword' && (
                     <Form {...newPasswordForm}>
                         <form onSubmit={newPasswordForm.handleSubmit(onNewPasswordSubmit)} className="space-y-4">

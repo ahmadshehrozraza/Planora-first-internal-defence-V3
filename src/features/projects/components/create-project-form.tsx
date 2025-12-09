@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { useCreateProject } from "../api/use-create-project";
 import { useRouter } from "next/navigation";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
+import { DatePicker } from "@/components/date-picker";
 
 interface CreateProjectFormProps {
     onCancel?: () => void;
@@ -53,7 +54,9 @@ export const CreateProjectForm = ({ onCancel }: CreateProjectFormProps) => {
         defaultValues: {
             name: "",
             workspaceId,
-            projectStatus: "IN_PROGRESS", 
+            projectStatus: "IN_PROGRESS",
+            dueDate: new Date(),
+            description: "",
         },
     });
 
@@ -61,7 +64,8 @@ export const CreateProjectForm = ({ onCancel }: CreateProjectFormProps) => {
         const finalValues = {
             ...values,
             imageUrl: values.imageUrl instanceof File ? values.imageUrl : "",
-            projectStatus: "IN_PROGRESS", 
+            projectStatus: "IN_PROGRESS",
+            dueDate: values.dueDate ? values.dueDate.toISOString() : undefined,
         };
 
         mutate({ form: finalValues }, {
@@ -93,68 +97,7 @@ export const CreateProjectForm = ({ onCancel }: CreateProjectFormProps) => {
             <CardContent className="p-4">
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
-                        <div className="flex h-full flex-col gap-y-9">
-                            {/* Project Name */}
-                            <FormField
-                                control={form.control}
-                                name="name"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Project Name</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                className="mb-4"
-                                                {...field}
-                                                placeholder="Enter project name"
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Project Status - READONLY for Create */}
-                            <FormField
-                                control={form.control}
-                                name="projectStatus"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Project Status</FormLabel>
-                                        <Select
-                                            defaultValue={field.value}
-                                            value={field.value}
-                                            onValueChange={field.onChange}
-                                            disabled // ✅ Disabled for create form
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select Status" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="IN_PROGRESS">
-                                                    <div className="flex items-center gap-x-2">
-                                                        <div className="size-2 rounded-full bg-green-500" />
-                                                        In Progress
-                                                    </div>
-                                                </SelectItem>
-                                                <SelectItem value="COMPLETED" disabled>
-                                                    <div className="flex items-center gap-x-2">
-                                                        <div className="size-2 rounded-full bg-blue-500" />
-                                                        Completed
-                                                    </div>
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            All new projects are created as "In Progress"
-                                        </p>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Project Image Upload */}
+                        <div className="flex h-full flex-col gap-y-4">
                             <FormField
                                 control={form.control}
                                 name="imageUrl"
@@ -228,6 +171,99 @@ export const CreateProjectForm = ({ onCancel }: CreateProjectFormProps) => {
                                             </div>
                                         </div>
                                     </div>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Project Name</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                className="mb-2"
+                                                {...field}
+                                                placeholder="Enter project name"
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="projectStatus"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Project Status</FormLabel>
+                                        <Select
+                                            defaultValue={field.value}
+                                            value={field.value}
+                                            onValueChange={field.onChange}
+                                            disabled
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select Status" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="IN_PROGRESS">
+                                                    <div className="flex items-center gap-x-2">
+                                                        <div className="size-2 rounded-full bg-green-500" />
+                                                        In Progress
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="COMPLETED" disabled>
+                                                    <div className="flex items-center gap-x-2">
+                                                        <div className="size-2 rounded-full bg-blue-500" />
+                                                        Completed
+                                                    </div>
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            All new projects are created as "In Progress"
+                                        </p>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="dueDate"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            Due Date
+                                        </FormLabel>
+                                        <FormControl>
+                                            <DatePicker {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="description"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            Project Description
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                className="mb-4"
+                                                {...field}
+                                                placeholder="Enter project description"
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
                                 )}
                             />
                         </div>

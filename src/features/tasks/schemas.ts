@@ -8,7 +8,11 @@ export const createTaskSchema =  z.object({
         status: z.nativeEnum(TaskStatus),
         workspaceId: z.string(),
         projectId: z.string(),
-        dueDate: z.date().optional(),
+        dueDate: z.coerce.date()
+        .optional()
+        .refine((date) => !date || date instanceof Date, {
+            message: "Invalid date format"
+        }),
         description: z.string().optional(),
         taskType: z.nativeEnum(TaskType),
         priority: z.nativeEnum(TaskPriority),

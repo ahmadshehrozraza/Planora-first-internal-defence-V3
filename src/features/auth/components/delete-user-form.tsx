@@ -85,11 +85,11 @@ export const DeleteUserForm = ({
             onSuccess: () => {
                 confirmDelete().then((ok) => {
                     if (ok) {
-                        handleDeleteAccount(); // Call delete function
+                        handleDeleteAccount(); 
                     }
                 });
             },
-            // onError already handled in the hook
+            
         });
     };
 
